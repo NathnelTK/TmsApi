@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +20,6 @@ builder.Services.AddOptions<PaymentOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
-
 builder.Services.AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
 builder.Services.AddAuthorization();
@@ -33,8 +29,7 @@ var app = builder.Build();
 // Register request logging first to wrap the pipeline
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseExceptionHandler();
-app.UseStatusCodePages();
+app.UseExceptionHandler("/error");
 
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
@@ -43,12 +38,6 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
@@ -62,11 +51,6 @@ app.MapGet("/api/enrollments/worker-smoke", (EnrollmentWorker worker) =>
 {
     worker.ProcessBatch();
     return Results.Ok("processed");
-});
-
-app.MapGet("/api/error", () =>
-{
-    throw new TmsDatabaseException("Simulated database failure for ProblemDetails testing");
 });
 
 app.MapControllers();
