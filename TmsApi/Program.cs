@@ -11,11 +11,6 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Register request logging first to wrap the pipeline
-app.UseMiddleware<RequestLoggingMiddleware>();
-
-app.UseExceptionHandler("/error");
-
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
 
