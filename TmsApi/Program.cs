@@ -2,8 +2,23 @@ using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add default service provider validation options
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
+
+builder.Services.AddSingleton<EnrollmentWorker>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+
+builder.Services.AddOptions<PaymentOptions>()
+    .BindConfiguration("Payments")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 builder.Services.AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
@@ -30,6 +45,13 @@ app.MapGet("/api/assessments/results", () => Results.Ok(new
     studentId = "S-001",
     letterGrade = "A"
 })).RequireAuthorization();
+
+// Smoke test route for EnrollmentWorker
+app.MapGet("/api/enrollments/worker-smoke", (EnrollmentWorker worker) =>
+{
+    worker.ProcessBatch();
+    return Results.Ok("processed");
+});
 
 app.MapControllers();
 
