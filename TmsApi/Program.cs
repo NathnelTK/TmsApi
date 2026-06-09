@@ -20,6 +20,8 @@ builder.Services.AddOptions<PaymentOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddProblemDetails();
+
 builder.Services.AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
 builder.Services.AddAuthorization();
@@ -29,7 +31,8 @@ var app = builder.Build();
 // Register request logging first to wrap the pipeline
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseExceptionHandler("/error");
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
@@ -51,6 +54,11 @@ app.MapGet("/api/enrollments/worker-smoke", (EnrollmentWorker worker) =>
 {
     worker.ProcessBatch();
     return Results.Ok("processed");
+});
+
+app.MapGet("/api/error", () =>
+{
+    throw new TmsDatabaseException("Simulated database failure for ProblemDetails testing");
 });
 
 app.MapControllers();
